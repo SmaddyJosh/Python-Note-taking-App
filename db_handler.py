@@ -41,3 +41,10 @@ def get_all_notes():
     notes=cursor.fetchall()
     conn.close()
     return notes
+
+def delete_notes():
+    conn=sqlite3.connect(DB_PATH)
+    cursor=conn.cursor()
+    cursor.execute("DELETE FROM notes")
+    conn.commit()
+    conn.close()

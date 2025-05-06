@@ -12,7 +12,7 @@ from PIL import Image
 from kivy.uix.filechooser import FileChooserIconView
 import cv2
 
-from db_handler import initialize_db,add_note
+from db_handler import initialize_db,add_note,get_all_notes,delete_notes
 from kivymd.uix.list import OneLineListItem
 
 
@@ -43,7 +43,8 @@ Screen:
                 MDNavigationDrawerItem:
                     icon: "note"
                     text: "Notes"
-                    on_release: app.show_content("Notes")
+                    on_release: app.Load_Notes()
+                    
     
                 MDNavigationDrawerItem:
                     icon: "settings"
@@ -61,26 +62,52 @@ Screen:
             mode: "rectangle"
             multiline: True
             size_hint_y: 0.8
+        
+        ScrollView:
+            size_hint_y: 0.3
+            MDList:
+                id: notes_list
 
-        MDRaisedButton:
-            text: "Save Note"
-            pos_hint: {"center_x": 0.5}
-            on_press: app.save_note()
+        MDBoxLayout:
+            orientation:'horizontal'
+            size_hint_y: None
+            height: "50dp"  
+            spacing: "10dp"
             
-        MDRaisedButton:
-            text: "Upload Image"
-            pos_hint: {"center_x": 0.5}
-            on_press: app.select_image()
+            
+            MDRaisedButton:
+                text: "Save Note"
+                pos_hint: {"center_x": 0.5}
+                on_press: app.save_note()
+                
+            MDRaisedButton:
+                text: "Upload Image"
+                pos_hint: {"center_x": 0.5}
+                on_press: app.select_image()
+    
+            MDRaisedButton:
+                text: "Extract Text"
+                pos_hint: {"center_x": 0.5}
+                on_press: app.extract_text()
+    
+            MDRaisedButton:
+                text: "Get Notes"
+                pos_hint: {"center_x": 0.5}
+                on_press: app.Load_Notes()
+            
+            MDRaisedButton:
+                text: "Delete All Notes!"
+                pos_hint: {"center_x": 0.5}
+                on_press: app.Del_Notes()
+                
+        MDLabel:
+            id: message_label
+            text: ""
+            halign: "center"
+            theme_text_color: "Hint"
+            size_hint_y: None
+            height: "40dp"
 
-        MDRaisedButton:
-            text: "Extract Text"
-            pos_hint: {"center_x": 0.5}
-            on_press: app.extract_text()
-
-        MDRaisedButton:
-            text: "Get Notes"
-            pos_hint: {"center_x": 0.5}
-            on_press: app.get_all_notes()
 
 
 """
@@ -96,9 +123,10 @@ class NotesApp(MDApp):
     def save_note(self):
         note_text = self.root.ids.note_input.text
         image_path = self.selected_image_path
-        title = "Note"  # Or generate from time or OCR text
+        title = note_text.strip().split('\n')[0][:30] or "Untitled"
 
         add_note(title, image_path, note_text)
+        self.root.ids.message_label.text="Note has been saved to DB"
         print(f"Note saved to DB: {note_text}")
         self.root.ids.note_input.text = ""  # Clear after saving
 
@@ -117,7 +145,7 @@ class NotesApp(MDApp):
             self.selected_image_path = selection[0]
             self.root.remove_widget(filechooser)
 
-    def get_all_notes(self):
+    def Load_Notes(self):
         self.root.ids.notes_list.clear_widgets()  # Clear previous notes from the list
 
         try:
@@ -132,6 +160,12 @@ class NotesApp(MDApp):
                 self.root.ids.notes_list.add_widget(note_item)  # Add the note to the list
         except Exception as e:
             print("Could not fetch notes:", e)
+
+    def Del_Notes(self):
+        delete_notes()
+        self.root.ids.message_label.text="All notes have been deleted"
+        print("ALl notes have been deleted")
+
 
 
 
